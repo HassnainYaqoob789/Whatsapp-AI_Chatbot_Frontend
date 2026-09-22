@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
+  <defs>
+    <linearGradient id="bubbleGradLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left: Speech Bubble Robot Icon -->
+  <g transform="translate(10, 0)">
+    <!-- Top Antenna -->
+    <circle cx="40" cy="12" r="4.5" fill="#5850EC" />
+    <rect x="38" y="15" width="4" height="8" rx="2" fill="#5850EC" />
+
+    <!-- Main Speech Bubble Body with Tail -->
+    <path 
+      d="M 26 21 
+         H 54 
+         C 65 21 73 29 73 40 
+         V 48 
+         C 73 59 65 67 54 67 
+         H 30 
+         L 16 78 
+         L 18 67 
+         C 12 66 7 61 7 54 
+         V 40 
+         C 7 29 15 21 26 21 Z" 
+      fill="url(#bubbleGradLight)" 
+    />
+
+    <!-- Inner Robot Visor -->
+    <rect 
+      x="19" 
+      y="33" 
+      width="42" 
+      height="22" 
+      rx="11" 
+      fill="#FFFFFF" 
+    />
+
+    <!-- Eyes -->
+    <circle cx="31" cy="44" r="4" fill="#1E1B4B" />
+    <circle cx="49" cy="44" r="4" fill="#1E1B4B" />
+
+    <!-- Smile -->
+    <rect x="37" y="50" width="6" height="1.6" rx="0.8" fill="#5850EC" />
+  </g>
+
+  <!-- Right: Clean Uppercase Modern Typography 'NARACORD' -->
+  <text 
+    x="105" 
+    y="52" 
+    font-family="'Space Grotesk', 'Inter', -apple-system, sans-serif" 
+    font-size="34" 
+    font-weight="800" 
+    letter-spacing="2" 
+    fill="#0B0F19"
+  >
+    NARACORD
+  </text>
+</svg>

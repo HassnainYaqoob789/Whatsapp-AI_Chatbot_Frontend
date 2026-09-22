@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
+  <defs>
+    <linearGradient id="bubbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="eyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#60A5FA" />
+    </linearGradient>
+    <filter id="auraGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#5850EC" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Left: Speech Bubble Robot Icon -->
+  <g transform="translate(10, 0)" filter="url(#auraGlow)">
+    <!-- Top Antenna -->
+    <circle cx="40" cy="12" r="4.5" fill="#5850EC" />
+    <rect x="38" y="15" width="4" height="8" rx="2" fill="#5850EC" />
+
+    <!-- Main Speech Bubble Body with Tail -->
+    <path 
+      d="M 26 21 
+         H 54 
+         C 65 21 73 29 73 40 
+         V 48 
+         C 73 59 65 67 54 67 
+         H 30 
+         L 16 78 
+         L 18 67 
+         C 12 66 7 61 7 54 
+         V 40 
+         C 7 29 15 21 26 21 Z" 
+      fill="url(#bubbleGrad)" 
+    />
+
+    <!-- Inner Robot Visor -->
+    <rect 
+      x="19" 
+      y="33" 
+      width="42" 
+      height="22" 
+      rx="11" 
+      fill="#0B0F19" 
+    />
+
+    <!-- Eyes -->
+    <circle cx="31" cy="44" r="4.5" fill="url(#eyeGrad)" />
+    <circle cx="32.5" cy="42.5" r="1.5" fill="#FFFFFF" />
+
+    <circle cx="49" cy="44" r="4.5" fill="url(#eyeGrad)" />
+    <circle cx="50.5" cy="42.5" r="1.5" fill="#FFFFFF" />
+
+    <!-- Smile -->
+    <rect x="37" y="50" width="6" height="1.6" rx="0.8" fill="#818CF8" />
+  </g>
+
+  <!-- Right: Clean Uppercase Modern Typography 'NARACORD' -->
+  <text 
+    x="105" 
+    y="52" 
+    font-family="'Space Grotesk', 'Inter', -apple-system, sans-serif" 
+    font-size="34" 
+    font-weight="800" 
+    letter-spacing="2" 
+    fill="#FFFFFF"
+  >
+    NARACORD
+  </text>
+</svg>
