@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // baseURL: import.meta.env.VITE_API_URL || 'https://wabex.alisonstech-dev.com/backend/api',
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:9999/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://wabex.alisonstech-dev.com/backend/api',
+  // baseURL: import.meta.env.VITE_API_URL || 'http://localhost:9999/api',
 });
 
 // Add a request interceptor to attach the JWT token

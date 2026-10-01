@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Typography, message, Spin, Alert, Tooltip, Modal, Select, Switch } from 'antd';
-import { SaveOutlined, SettingOutlined, ThunderboltOutlined, MailOutlined } from '@ant-design/icons';
+import { SaveOutlined, SettingOutlined, ThunderboltOutlined, MailOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import axiosConfig from '../../utils/axiosConfig';
 
 const { Title, Text } = Typography;
@@ -35,6 +35,13 @@ const ClientSettings = ({ clientId }) => {
           smtpUser:              c.smtpUser     || '',
           smtpPassword:          '',
           smtpFrom:              c.smtpFrom     || '',
+          phoneNumberId:         c.phoneNumberId || '',
+          wabaId:                c.wabaId || '',
+          whatsappToken:         '',
+          welcomeMessage:        c.welcomeMessage || '',
+          welcomeButtons:        (c.welcomeButtons && c.welcomeButtons.length > 0) ? c.welcomeButtons : [{ id: 'btn_1', title: '' }, { id: 'btn_2', title: '' }, { id: 'btn_3', title: '' }],
+          externalApiUrl:        c.externalApiUrl || '',
+          externalApiKey:        c.externalApiKey || '',
         });
       }
     } catch (error) {
@@ -51,12 +58,21 @@ const ClientSettings = ({ clientId }) => {
       // Don't overwrite sensitive fields with empty strings
       if (!values.smtpPassword)  delete values.smtpPassword;
       if (!values.aiApiKey)      delete values.aiApiKey;
+      if (!values.whatsappToken) delete values.whatsappToken;
+      if (!values.externalApiKey) delete values.externalApiKey;
+
+      // Filter out empty welcome buttons (only send buttons with actual titles)
+      if (values.welcomeButtons) {
+        values.welcomeButtons = values.welcomeButtons
+          .filter(b => b && b.title && b.title.trim())
+          .map((b, i) => ({ id: b.id || `btn_${i + 1}`, title: b.title.trim() }));
+      }
 
       const res = await axiosConfig.put('/clients/me/settings', values);
       if (res.data.success) {
         message.success('Settings updated successfully!');
         // Clear password fields after save
-        form.setFieldsValue({ smtpPassword: '', aiApiKey: '' });
+        form.setFieldsValue({ smtpPassword: '', aiApiKey: '', whatsappToken: '' });
       }
     } catch (error) {
       console.error(error);
@@ -280,6 +296,38 @@ You are highly intelligent, and your only focus is ${businessName}'s success.`;
               If your WhatsApp disconnects, simply use the <strong>"Connect with Meta"</strong> button in your dashboard to securely re-link your account.
             </Text>
           </div>
+
+          {/* ── Manual Meta Credentials (Advanced/Fallback) ── */}
+          <div style={{
+            background: '#fafafa',
+            border: '1px solid #d9d9d9',
+            borderRadius: 12,
+            padding: '20px 24px',
+            marginBottom: 24,
+            marginTop: 8
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 18 }}>🔑</span>
+              <Text strong style={{ fontSize: 15 }}>Manual Meta Credentials (Advanced)</Text>
+            </div>
+            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 16 }}>
+              If you generated your Permanent Token and IDs manually via the Meta Developer Portal, you can enter them here to override the automated connection.
+            </Text>
+            
+            <div style={{ display: 'flex', gap: 16 }}>
+              <Form.Item name="phoneNumberId" label="Phone Number ID" style={{ flex: 1 }}>
+                <Input placeholder="e.g. 1301346903068753" size="large" />
+              </Form.Item>
+              <Form.Item name="wabaId" label="WABA ID" style={{ flex: 1 }}>
+                <Input placeholder="e.g. 1111648884706447" size="large" />
+              </Form.Item>
+            </div>
+            
+            <Form.Item name="whatsappToken" label="Permanent Access Token" extra="Leave blank to keep your current token.">
+              <Input.Password placeholder="EAAG..." size="large" />
+            </Form.Item>
+          </div>
+
           {/* ── AI Quota & BYOK ── */}
           <div style={{
             background: '#fffbeb',
@@ -343,6 +391,98 @@ You are highly intelligent, and your only focus is ${businessName}'s success.`;
                 );
               }}
             </Form.Item>
+          </div>
+
+          {/* ── Welcome Menu Configuration ── */}
+          <div style={{
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: 12,
+            padding: '20px 24px',
+            marginBottom: 24,
+            marginTop: 8
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <span style={{ fontSize: 18 }}>💬</span>
+              <Text strong style={{ fontSize: 15 }}>Welcome Menu (First Message Auto-Reply)</Text>
+            </div>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 16 }}>
+              When a new customer sends their first message (Hi, Hello, etc.), the bot will automatically send an interactive message with quick-reply buttons.
+              Customize the welcome text and up to 3 buttons below. Leave empty to use defaults.
+            </Text>
+
+            <Form.Item 
+              name="welcomeMessage" 
+              label="Welcome Message" 
+              extra="The greeting text shown above the buttons. Use *text* for bold. Leave blank for default."
+            >
+              <Input.TextArea 
+                rows={3} 
+                placeholder={`e.g. Welcome to *Your Business*! 👋\n\nHow can we help you today?`}
+                maxLength={1024}
+                showCount
+              />
+            </Form.Item>
+
+            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>Quick Reply Buttons (Max 3, each max 20 characters)</Text>
+            <Form.List name="welcomeButtons">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }, index) => (
+                    <div key={key} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                      <Form.Item {...restField} name={[name, 'id']} hidden initialValue={`btn_${index + 1}`}>
+                        <Input />
+                      </Form.Item>
+                      <Form.Item 
+                        {...restField} 
+                        name={[name, 'title']} 
+                        style={{ flex: 1, marginBottom: 0 }}
+                        rules={[{ max: 20, message: 'Max 20 characters' }]}
+                      >
+                        <Input placeholder={`Button ${index + 1} label (e.g. Learn More)`} size="large" maxLength={20} />
+                      </Form.Item>
+                      {fields.length > 1 && (
+                        <MinusCircleOutlined style={{ color: '#ff4d4f', fontSize: 18, cursor: 'pointer' }} onClick={() => remove(name)} />
+                      )}
+                    </div>
+                  ))}
+                  {fields.length < 3 && (
+                    <Button type="dashed" onClick={() => add({ id: `btn_${fields.length + 1}`, title: '' })} block icon={<PlusOutlined />} style={{ marginTop: 4 }}>
+                      Add Button
+                    </Button>
+                  )}
+                </>
+              )}
+            </Form.List>
+          </div>
+
+          {/* ── Universal API / Webhook Integration ── */}
+          <div style={{
+            background: '#faf5ff',
+            border: '1px solid #e9d5ff',
+            borderRadius: 12,
+            padding: '20px 24px',
+            marginBottom: 24,
+            marginTop: 8
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <span style={{ fontSize: 18 }}>🔗</span>
+              <Text strong style={{ fontSize: 15 }}>Universal API & Webhook (SaaS Integration)</Text>
+            </div>
+            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 16 }}>
+              Connect your own backend software to this Chatbot. Instruct the AI to collect specific fields and trigger this API. The Chatbot will forward the structured data to your URL securely.
+            </Text>
+
+            <div style={{ display: 'flex', gap: 16 }}>
+              <Form.Item name="externalApiUrl" label="External API Endpoint (URL)" style={{ flex: 2 }}
+                extra="e.g. https://api.yoursoftware.com/api/chatbot-onboard">
+                <Input placeholder="https://..." size="large" />
+              </Form.Item>
+              <Form.Item name="externalApiKey" label="API Secret Key" style={{ flex: 1 }}
+                extra="Sent in headers as 'x-chatbot-api-key'">
+                <Input.Password placeholder="Enter your secret key" size="large" />
+              </Form.Item>
+            </div>
           </div>
 
           {/* ── Email Notification SMTP ── */}
