@@ -81,7 +81,7 @@ const ClientAdminDashboard = () => {
 
       newSocket.on('chat-updated', (data) => {
         fetchChats(false);
-        if (data.phone === selectedChat) {
+        if (data.phone === activeChatRef.current) {
           loadChatHistory(data.phone, 1, false, false);
         }
       });
