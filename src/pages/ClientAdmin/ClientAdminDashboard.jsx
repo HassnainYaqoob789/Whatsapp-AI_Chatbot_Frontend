@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
-import { Layout, Menu, Button, List, Avatar, Input, Typography, message, Table, Tag, Modal, Form, Select, Space, Card, Statistic, Popconfirm, Switch, Tooltip, Row, Col, Spin, Progress, Dropdown, Upload } from 'antd';
+import { Layout, Menu, Button, List, Avatar, Input, Typography, message, Table, Tag, Modal, Form, Select, Space, Card, Statistic, Popconfirm, Switch, Tooltip, Row, Col, Spin, Progress, Dropdown, Upload, Badge } from 'antd';
 import { LogoutOutlined, MessageOutlined, BarChartOutlined, FileTextOutlined, UserOutlined, SendOutlined, PlusOutlined, DeleteOutlined, RobotOutlined, UserSwitchOutlined, RiseOutlined, DollarOutlined, CheckCircleOutlined, ClockCircleOutlined, ThunderboltOutlined, TeamOutlined, PhoneOutlined, FireOutlined, SettingOutlined, NotificationOutlined, MenuOutlined, DownOutlined, ArrowLeftOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/axiosConfig';
@@ -71,12 +71,34 @@ const ClientAdminDashboard = () => {
   // ═══════════════════════════════════════════
   useEffect(() => {
     if (user && user.clientId) {
-      const socketUrl = api.defaults.baseURL.replace(/\/api\/?$/, '') || 'http://localhost:9999';
-      const newSocket = io(socketUrl);
+      // Build socket origin (strip path) and path separately
+      // e.g. baseURL = https://wabex.alisonstech-dev.com/backend/api
+      //   => socketOrigin = https://wabex.alisonstech-dev.com
+      //   => socketPath   = /backend/socket.io
+      const baseURL = api.defaults.baseURL || 'http://localhost:9999/api';
+      let socketOrigin = 'http://localhost:9999';
+      let socketPath = '/socket.io'; // default
+      try {
+        const parsed = new URL(baseURL);
+        socketOrigin = parsed.origin; // e.g. https://wabex.alisonstech-dev.com
+        // Strip /api from the end to get /backend, then append /socket.io
+        const basePath = parsed.pathname.replace(/\/api\/?$/, ''); // e.g. /backend
+        socketPath = (basePath && basePath !== '/') ? `${basePath}/socket.io` : '/socket.io';
+      } catch (e) {
+        console.warn('Socket URL parse error:', e);
+      }
+
+      console.log('[Socket] Connecting to:', socketOrigin, 'path:', socketPath);
+      const newSocket = io(socketOrigin, { path: socketPath });
       setSocket(newSocket);
 
       newSocket.on('connect', () => {
+        console.log('[Socket] Connected! Joining room:', user.clientId);
         newSocket.emit('join-client-room', user.clientId);
+      });
+
+      newSocket.on('connect_error', (err) => {
+        console.warn('[Socket] Connection error:', err.message);
       });
 
       newSocket.on('chat-updated', (data) => {
@@ -89,11 +111,10 @@ const ClientAdminDashboard = () => {
       // ── Polling fallback when socket disconnects ──
       let pollInterval = null;
       newSocket.on('disconnect', () => {
-        console.warn('Socket disconnected — falling back to 10s polling');
+        console.warn('[Socket] Disconnected — falling back to 10s polling');
         pollInterval = setInterval(() => fetchChats(false), 10000);
       });
       newSocket.on('connect', () => {
-        // Clear polling once socket reconnects
         if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
         newSocket.emit('join-client-room', user.clientId);
       });
@@ -151,6 +172,9 @@ const ClientAdminDashboard = () => {
         }));
       } else {
         setChatDetails(chat);
+        // ── Mark as read: reset unreadCount on backend & local state ──
+        api.patch(`/chatbot/chats/${phone}/read`).catch(() => {});
+        setChats(prev => prev.map(c => c.phoneNumber === phone ? { ...c, unreadCount: 0 } : c));
       }
 
       if (pagination) {
@@ -616,12 +640,22 @@ const ClientAdminDashboard = () => {
                 onClick={() => loadChatHistory(item.phoneNumber)}
               >
                 <List.Item.Meta
-                  avatar={<Avatar size="large" style={{ backgroundColor: item.isAiPaused ? '#faad14' : '#1890ff' }} icon={item.isAiPaused ? <UserSwitchOutlined /> : <RobotOutlined />} />}
-                  title={<div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Text strong>{item.phoneNumber}</Text>
+                  avatar={
+                    <Badge count={item.unreadCount || 0} size="small" offset={[-2, 6]}>
+                      <Avatar size="large" style={{ backgroundColor: item.isAiPaused ? '#faad14' : '#1890ff' }} icon={item.isAiPaused ? <UserSwitchOutlined /> : <RobotOutlined />} />
+                    </Badge>
+                  }
+                  title={<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text strong style={{ fontWeight: item.unreadCount > 0 ? 700 : 500, color: item.unreadCount > 0 ? '#1f2937' : '#475569' }}>
+                      {item.customerName ? `${item.customerName} (${item.phoneNumber})` : item.phoneNumber}
+                    </Text>
                     {item.isAiPaused && <Tag color="warning" style={{ margin: 0, fontSize: 10 }}>Manual</Tag>}
                   </div>}
-                  description={<Text type="secondary" style={{ fontSize: 11 }}>{new Date(item.updatedAt).toLocaleString()}</Text>}
+                  description={
+                    <Text type="secondary" style={{ fontSize: 11, fontWeight: item.unreadCount > 0 ? 600 : 400, color: item.unreadCount > 0 ? '#3b82f6' : '#94a3b8' }}>
+                      {item.unreadCount > 0 ? `${item.unreadCount} new message${item.unreadCount > 1 ? 's' : ''}` : new Date(item.updatedAt).toLocaleString()}
+                    </Text>
+                  }
                 />
               </List.Item>
             )}
@@ -644,7 +678,7 @@ const ClientAdminDashboard = () => {
                   style={{ display: 'none' }} // Ensure it uses CSS for display
                 />
                 <div>
-                  <Title level={5} style={{ margin: 0 }}>{selectedChat}</Title>
+                  <Title level={5} style={{ margin: 0 }}>{chatDetails.customerName ? `${chatDetails.customerName} (${selectedChat})` : selectedChat}</Title>
                   <Text type="secondary" style={{ fontSize: 12 }}>{chatDetails.messages?.length || 0} messages history</Text>
                 </div>
               </div>
@@ -1200,8 +1234,8 @@ const ClientAdminDashboard = () => {
             </Text>
             <div style={{ marginTop: 12 }}>
               {totalConversations === 0 ? (
-                <Tag color="warning" style={{ borderRadius: 20, padding: '4px 12px', fontWeight: 600, background: '#fffbe6', color: '#faad14', border: 'none' }}>
-                  <ClockCircleOutlined /> Sandbox Mode — No conversations yet
+                <Tag color="processing" style={{ borderRadius: 20, padding: '4px 12px', fontWeight: 600 }}>
+                  <ClockCircleOutlined /> Live Production — Awaiting Analytics Sync
                 </Tag>
               ) : (
                 <Tag color="success" style={{ borderRadius: 20, padding: '4px 12px', fontWeight: 600 }}>
