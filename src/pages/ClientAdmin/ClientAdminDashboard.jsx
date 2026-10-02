@@ -965,7 +965,7 @@ const ClientAdminDashboard = () => {
         return <Tag color={colorMap[text] || 'default'}>{text || 'New'}</Tag>;
       }
     },
-    { title: 'Date', dataIndex: 'createdAt', key: 'createdAt', render: (text) => new Date(text).toLocaleDateString() },
+    { title: 'Date', dataIndex: 'created', key: 'created', render: (text) => new Date(text).toLocaleDateString() },
   ];
 
   const exportLeadsToCSV = () => {
