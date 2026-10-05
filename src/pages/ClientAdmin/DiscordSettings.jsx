@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Typography, message, Spin, Switch, Select, Alert, Modal, Table, Popconfirm, Row, Col, Space, Divider, Tag } from 'antd';
+import { Card, Form, Input, InputNumber, Button, Typography, message, Spin, Switch, Select, Alert, Modal, Table, Popconfirm, Row, Col, Space, Divider, Tag } from 'antd';
 import { SaveOutlined, PlusOutlined, DeleteOutlined, SettingOutlined, LinkOutlined, DisconnectOutlined, SafetyCertificateOutlined, CodeOutlined } from '@ant-design/icons';
 import axiosConfig from '../../utils/axiosConfig';
 
@@ -244,28 +244,43 @@ const DiscordSettings = ({ clientId }) => {
                     <Switch checkedChildren="AI Classification ON" unCheckedChildren="AI Classification OFF" />
                   </Form.Item>
                   <Form.Item name={['moderation', 'spamLimit']} label="Spam Limit (Messages / 10s)">
-                    <Input type="number" min={2} max={30} />
+                    <InputNumber style={{ width: '100%' }} min={2} max={30} />
                   </Form.Item>
                 </Col>
 
                 <Col span={12}>
                   <Text strong>Allowed Actions (Bot Permissions)</Text>
                   <Divider style={{ margin: '8px 0' }} />
-                  <Form.Item name={['moderation', 'actions', 'delete']} valuePropName="checked" style={{ marginBottom: 8 }}>
-                    <Switch size="small" /> <Text style={{ marginLeft: 8 }}>Delete Messages</Text>
-                  </Form.Item>
-                  <Form.Item name={['moderation', 'actions', 'warn']} valuePropName="checked" style={{ marginBottom: 8 }}>
-                    <Switch size="small" /> <Text style={{ marginLeft: 8 }}>Warn Users</Text>
-                  </Form.Item>
-                  <Form.Item name={['moderation', 'actions', 'timeout']} valuePropName="checked" style={{ marginBottom: 8 }}>
-                    <Switch size="small" /> <Text style={{ marginLeft: 8 }}>Timeout (Mute)</Text>
-                  </Form.Item>
-                  <Form.Item name={['moderation', 'actions', 'kick']} valuePropName="checked" style={{ marginBottom: 8 }}>
-                    <Switch size="small" /> <Text style={{ marginLeft: 8 }}>Kick</Text>
-                  </Form.Item>
-                  <Form.Item name={['moderation', 'actions', 'ban']} valuePropName="checked" style={{ marginBottom: 8 }}>
-                    <Switch size="small" /> <Text style={{ marginLeft: 8 }}>Ban (Dangerous)</Text>
-                  </Form.Item>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <Form.Item name={['moderation', 'actions', 'delete']} valuePropName="checked" noStyle>
+                      <Switch size="small" />
+                    </Form.Item>
+                    <Text style={{ marginLeft: 8 }}>Delete Messages</Text>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <Form.Item name={['moderation', 'actions', 'warn']} valuePropName="checked" noStyle>
+                      <Switch size="small" />
+                    </Form.Item>
+                    <Text style={{ marginLeft: 8 }}>Warn Users</Text>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <Form.Item name={['moderation', 'actions', 'timeout']} valuePropName="checked" noStyle>
+                      <Switch size="small" />
+                    </Form.Item>
+                    <Text style={{ marginLeft: 8 }}>Timeout (Mute)</Text>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <Form.Item name={['moderation', 'actions', 'kick']} valuePropName="checked" noStyle>
+                      <Switch size="small" />
+                    </Form.Item>
+                    <Text style={{ marginLeft: 8 }}>Kick</Text>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <Form.Item name={['moderation', 'actions', 'ban']} valuePropName="checked" noStyle>
+                      <Switch size="small" />
+                    </Form.Item>
+                    <Text style={{ marginLeft: 8 }}>Ban (Dangerous)</Text>
+                  </div>
                 </Col>
               </Row>
               
@@ -278,12 +293,12 @@ const DiscordSettings = ({ clientId }) => {
               <Row gutter={16}>
                 <Col span={6}>
                   <Form.Item name={['moderation', 'escalation', 'strikeLimit']} label="Strikes to Trigger">
-                    <Input type="number" min={1} max={10} />
+                    <InputNumber style={{ width: '100%' }} min={1} max={10} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
                   <Form.Item name={['moderation', 'escalation', 'windowDays']} label="Time Window (Days)">
-                    <Input type="number" min={1} max={30} />
+                    <InputNumber style={{ width: '100%' }} min={1} max={30} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
@@ -298,7 +313,7 @@ const DiscordSettings = ({ clientId }) => {
                 </Col>
                 <Col span={6}>
                   <Form.Item name={['moderation', 'escalation', 'timeoutMinutes']} label="Timeout Duration (Mins)">
-                    <Input type="number" min={1} max={40320} />
+                    <InputNumber style={{ width: '100%' }} min={1} max={40320} />
                   </Form.Item>
                 </Col>
               </Row>
