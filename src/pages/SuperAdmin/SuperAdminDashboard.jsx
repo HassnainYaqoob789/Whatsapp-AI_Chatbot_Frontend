@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Layout, Menu, Button, Table, Modal, Form, Input, message, Popconfirm, Switch, Tag, Space, Typography, Dropdown, Card, Row, Col, Progress, Tooltip } from 'antd';
+import { Layout, Menu, Button, Table, Modal, Form, Input, message, Popconfirm, Switch, Tag, Space, Typography, Dropdown, Card, Row, Col, Progress, Tooltip, Select } from 'antd';
 import { LogoutOutlined, TeamOutlined, UserAddOutlined, EditOutlined, DeleteOutlined, PauseCircleOutlined, CheckCircleOutlined, BarChartOutlined, MessageOutlined, FireOutlined, RobotOutlined, UserOutlined, SettingOutlined, DownOutlined } from '@ant-design/icons';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/axiosConfig';
@@ -7,6 +7,7 @@ import { NaracordLogo, NaracordIcon } from '../../components/NaracordLogo';
 
 const { Header, Content, Sider } = Layout;
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const SuperAdminDashboard = () => {
   const { logout, user } = useContext(AuthContext);
@@ -76,7 +77,11 @@ const SuperAdminDashboard = () => {
       const clientRes = await api.post('/clients', {
         businessName: values.businessName,
         systemPrompt: values.systemPrompt,
-        leadNotificationEmail: values.leadNotificationEmail
+        leadNotificationEmail: values.leadNotificationEmail,
+        channels: {
+          whatsapp: values.services?.includes('whatsapp') || false,
+          discord: values.services?.includes('discord') || false,
+        }
       });
 
       const clientId = clientRes.data.client._id;
@@ -104,14 +109,24 @@ const SuperAdminDashboard = () => {
     editForm.setFieldsValue({
       businessName: client.businessName,
       systemPrompt: client.systemPrompt,
-      leadNotificationEmail: client.leadNotificationEmail
+      leadNotificationEmail: client.leadNotificationEmail,
+      services: client.channels ? [
+        ...(client.channels.whatsapp ? ['whatsapp'] : []),
+        ...(client.channels.discord ? ['discord'] : [])
+      ] : ['whatsapp']
     });
     setIsEditModalVisible(true);
   };
 
   const handleEditClient = async (values) => {
     try {
-      await api.put(`/clients/${editingClient._id}`, values);
+      await api.put(`/clients/${editingClient._id}`, {
+        ...values,
+        channels: {
+          whatsapp: values.services?.includes('whatsapp') || false,
+          discord: values.services?.includes('discord') || false,
+        }
+      });
       message.success("Client updated successfully!");
       setIsEditModalVisible(false);
       setEditingClient(null);
@@ -164,6 +179,19 @@ const SuperAdminDashboard = () => {
       onFilter: (value, record) => record.origin === value,
     },
     {
+      title: 'Services',
+      key: 'services',
+      render: (_, record) => {
+        const c = record.channels || { whatsapp: true, discord: false };
+        return (
+          <Space size="small" direction="vertical">
+            {c.whatsapp && <Tag color="green">WhatsApp</Tag>}
+            {c.discord && <Tag color="indigo">Discord</Tag>}
+          </Space>
+        );
+      }
+    },
+    {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
@@ -195,6 +223,13 @@ const SuperAdminDashboard = () => {
     <>
       <Form.Item name="businessName" label="Business Name" rules={[{ required: true }]}>
         <Input placeholder="e.g. Al-Rehan Real Estate" />
+      </Form.Item>
+
+      <Form.Item name="services" label="Enabled Services" rules={[{ required: true, message: 'Please select at least one service' }]} initialValue={['whatsapp']}>
+        <Select mode="multiple" placeholder="Select services for this client (WhatsApp, Discord)">
+          <Select.Option value="whatsapp">WhatsApp AI Chatbot</Select.Option>
+          <Select.Option value="discord">Discord AI Moderation</Select.Option>
+        </Select>
       </Form.Item>
 
       <div style={{ padding: '10px 14px', background: '#f0fdf4', borderLeft: '4px solid #22c55e', borderRadius: '4px', marginBottom: '20px' }}>

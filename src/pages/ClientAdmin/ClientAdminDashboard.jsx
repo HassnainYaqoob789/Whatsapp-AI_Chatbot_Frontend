@@ -8,6 +8,7 @@ import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Cartesia
 import ClientSettings from './ClientSettings';
 import BroadcastManager from './BroadcastManager';
 import AutoReplies from './AutoReplies';
+import DiscordSettings from './DiscordSettings';
 import { NaracordLogo, NaracordIcon } from '../../components/NaracordLogo';
 
 const { Header, Content, Sider } = Layout;
@@ -15,7 +16,11 @@ const { Title, Text } = Typography;
 
 const ClientAdminDashboard = () => {
   const { logout, user } = useContext(AuthContext);
-  const [activeMenu, setActiveMenu] = useState('inbox');
+  const channels = user?.clientChannels || { whatsapp: true, discord: false };
+  const hasWhatsapp = channels.whatsapp;
+  const hasDiscord = channels.discord;
+
+  const [activeMenu, setActiveMenu] = useState(hasWhatsapp ? 'inbox' : (hasDiscord ? 'discord' : 'settings'));
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ────── SOCKET ──────
@@ -1814,6 +1819,7 @@ const ClientAdminDashboard = () => {
       case 'broadcast': return <BroadcastManager />;
       case 'autoreplies': return <AutoReplies />;
       case 'settings': return <ClientSettings clientId={user?.clientId} />;
+      case 'discord': return <DiscordSettings clientId={user?.clientId} />;
       default: return renderInbox();
     }
   };
@@ -1829,7 +1835,8 @@ const ClientAdminDashboard = () => {
     templates: 'WhatsApp Templates',
     broadcast: 'Marketing Campaigns',
     autoreplies: 'Auto Replies & Menus',
-    settings: 'Account Settings'
+    settings: 'Account Settings',
+    discord: 'Discord AI Moderation'
   };
 
   const profileMenuItems = [
@@ -1887,12 +1894,13 @@ const ClientAdminDashboard = () => {
             setSidebarOpen(false);
           }}
         >
-          <Menu.Item key="inbox" icon={<MessageOutlined />}>Live Inbox</Menu.Item>
-          <Menu.Item key="leads" icon={<UserOutlined />}>Captured Leads</Menu.Item>
-          <Menu.Item key="analytics" icon={<BarChartOutlined />}>Meta Analytics</Menu.Item>
-          <Menu.Item key="templates" icon={<FileTextOutlined />}>Templates</Menu.Item>
-          <Menu.Item key="broadcast" icon={<NotificationOutlined />}>Broadcast / Campaigns</Menu.Item>
-          <Menu.Item key="autoreplies" icon={<ThunderboltOutlined />}>Auto Replies</Menu.Item>
+          {hasWhatsapp && <Menu.Item key="inbox" icon={<MessageOutlined />}>Live Inbox</Menu.Item>}
+          {hasWhatsapp && <Menu.Item key="leads" icon={<UserOutlined />}>Captured Leads</Menu.Item>}
+          {hasWhatsapp && <Menu.Item key="analytics" icon={<BarChartOutlined />}>Meta Analytics</Menu.Item>}
+          {hasWhatsapp && <Menu.Item key="templates" icon={<FileTextOutlined />}>Templates</Menu.Item>}
+          {hasWhatsapp && <Menu.Item key="broadcast" icon={<NotificationOutlined />}>Broadcast / Campaigns</Menu.Item>}
+          {hasWhatsapp && <Menu.Item key="autoreplies" icon={<ThunderboltOutlined />}>Auto Replies</Menu.Item>}
+          {hasDiscord && <Menu.Item key="discord" icon={<SettingOutlined />}>Discord Moderation</Menu.Item>}
           <Menu.Item key="settings" icon={<SettingOutlined />}>Profile & Settings</Menu.Item>
         </Menu>
 
