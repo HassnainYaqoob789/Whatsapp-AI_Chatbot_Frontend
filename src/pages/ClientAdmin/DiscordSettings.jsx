@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Input, InputNumber, Button, Typography, message, Spin, Switch, Select, Alert, Modal, Table, Popconfirm, Row, Col, Space, Divider, Tag } from 'antd';
-import { SaveOutlined, PlusOutlined, DeleteOutlined, SettingOutlined, LinkOutlined, DisconnectOutlined, SafetyCertificateOutlined, CodeOutlined } from '@ant-design/icons';
+import { Card, Form, Input, InputNumber, Button, Typography, message, Spin, Switch, Select, Alert, Modal, Table, Popconfirm, Row, Col, Space, Divider, Tag, Statistic, Progress } from 'antd';
+import { SaveOutlined, PlusOutlined, DeleteOutlined, SettingOutlined, LinkOutlined, DisconnectOutlined, SafetyCertificateOutlined, CodeOutlined, DashboardOutlined, DollarOutlined, RobotOutlined } from '@ant-design/icons';
 import axiosConfig from '../../utils/axiosConfig';
 
 const { Title, Text } = Typography;
@@ -13,6 +13,8 @@ const DiscordSettings = ({ clientId }) => {
   const [fetching, setFetching] = useState(true);
   const [discordState, setDiscordState] = useState(null); // guildId, guildName, botMode
   const [discordChannelsList, setDiscordChannelsList] = useState([]);
+  const [discordRolesList, setDiscordRolesList] = useState([]); // if possible to fetch, else let it be just string inputs
+  const [stats, setStats] = useState(null);
   
   // Custom Bot Modal
   const [isCustomBotModalOpen, setIsCustomBotModalOpen] = useState(false);
@@ -51,7 +53,12 @@ const DiscordSettings = ({ clientId }) => {
           moderation: {
             enabled: d.moderation?.enabled !== false,
             dryRun: d.moderation?.dryRun === true,
-            aiClassify: d.moderation?.aiClassify === true,
+            aiMode: d.moderation?.aiMode || (d.moderation?.aiClassify ? 'smart' : 'off'),
+            trustedRoleIds: d.moderation?.trustedRoleIds || [],
+            exemptChannelIds: d.moderation?.exemptChannelIds || [],
+            scanOnlyNewMembers: d.moderation?.scanOnlyNewMembers === true,
+            newMemberDays: d.moderation?.newMemberDays || 7,
+            aiChecksPerMinute: d.moderation?.aiChecksPerMinute || 30,
             spamLimit: d.moderation?.spamLimit || 5,
             actions: {
               delete: d.moderation?.actions?.delete !== false,
@@ -69,9 +76,10 @@ const DiscordSettings = ({ clientId }) => {
           }
         });
 
-        // Only fetch discord channels if connected
+        // Only fetch discord channels/stats if connected
         if (c.discord && d.guildId) {
           fetchDiscordChannels();
+          fetchStats();
         }
       }
     } catch (error) {
@@ -90,6 +98,15 @@ const DiscordSettings = ({ clientId }) => {
       }
     } catch (err) {
       console.warn("Failed to fetch discord channels", err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await axiosConfig.get('/discord/stats?days=7');
+      if (res.data.success) setStats(res.data.summary);
+    } catch (err) {
+      console.warn("Failed to fetch moderation stats", err);
     }
   };
 
@@ -195,6 +212,37 @@ const DiscordSettings = ({ clientId }) => {
         </div>
       </Card>
 
+      {/* ── AI EFFICIENCY DASHBOARD ── */}
+      {discordState?.connected && stats && (
+        <Card title={<><DashboardOutlined /> AI Efficiency (Last 7 Days)</>} style={{ borderRadius: 12, marginBottom: 24, background: '#f8fafc' }}>
+          <Row gutter={16}>
+            <Col span={6}>
+              <Statistic title="Messages Scanned" value={stats.messagesSeen} prefix={<RobotOutlined />} />
+            </Col>
+            <Col span={6}>
+              <Statistic title="Handled For Free" value={stats.percentHandledFree} suffix="%" valueStyle={{ color: '#166534' }} />
+              <Progress percent={stats.percentHandledFree} size="small" showInfo={false} strokeColor="#166534" />
+            </Col>
+            <Col span={6}>
+              <Statistic title="GPT Calls" value={stats.gptCalls} />
+              <Text type="secondary" style={{ fontSize: '12px' }}>Cost: ~${stats.estimatedGptCost.toFixed(3)}</Text>
+            </Col>
+            <Col span={6}>
+              <Statistic title="Estimated Savings" value={stats.estimatedSavings} precision={2} prefix={<DollarOutlined />} valueStyle={{ color: '#16a34a' }} />
+              <Text type="secondary" style={{ fontSize: '12px' }}>By skipping GPT when possible</Text>
+            </Col>
+          </Row>
+          <Divider style={{ margin: '16px 0' }} />
+          <Row gutter={16}>
+            <Col span={24}>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Breakdown: <b>{stats.decidedByRules}</b> stopped by rules | <b>{stats.skippedPreFilter}</b> skipped (pre-filter) | <b>{stats.cacheHits}</b> cached | <b>{stats.moderationApiCalls}</b> OpenAI Mod API. | <b>{stats.violations}</b> total violations caught.
+              </Text>
+            </Col>
+          </Row>
+        </Card>
+      )}
+
       <Form form={form} layout="vertical" onFinish={handleFinish} disabled={!discordState?.connected}>
         <Row gutter={24}>
           <Col span={24}>
@@ -240,8 +288,12 @@ const DiscordSettings = ({ clientId }) => {
                   <Form.Item name={['moderation', 'dryRun']} valuePropName="checked" extra="If ON, the bot will log violations but won't delete or punish.">
                     <Switch checkedChildren="Dry Run (Test Mode) ON" unCheckedChildren="Dry Run OFF" />
                   </Form.Item>
-                  <Form.Item name={['moderation', 'aiClassify']} valuePropName="checked" extra="Use AI to classify intent (slightly slower but smarter).">
-                    <Switch checkedChildren="AI Classification ON" unCheckedChildren="AI Classification OFF" />
+                  <Form.Item name={['moderation', 'aiMode']} label="AI Scan Mode">
+                    <Select>
+                      <Option value="smart">Smart (Recommended) - Fast, cheap, layered filtering</Option>
+                      <Option value="strict">Strict - Uses GPT heavily (higher cost)</Option>
+                      <Option value="off">Off - Only use keyword rules</Option>
+                    </Select>
                   </Form.Item>
                   <Form.Item name={['moderation', 'spamLimit']} label="Spam Limit (Messages / 10s)">
                     <InputNumber style={{ width: '100%' }} min={2} max={30} />
@@ -281,6 +333,43 @@ const DiscordSettings = ({ clientId }) => {
                     </Form.Item>
                     <Text style={{ marginLeft: 8 }}>Ban (Dangerous)</Text>
                   </div>
+                </Col>
+              </Row>
+
+              <Divider />
+              <Title level={5}>Cost & Performance</Title>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                Optimize your AI spending by skipping trusted members and trivial messages.
+              </Text>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item name={['moderation', 'trustedRoleIds']} label="Trusted Roles (Skip AI)" extra="Users with these roles are never scanned by AI.">
+                    <Select mode="tags" placeholder="Enter Role IDs (e.g. 123456789)" style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name={['moderation', 'exemptChannelIds']} label="Exempt Channels" extra="Messages in these channels are ignored by AI.">
+                    <Select mode="multiple" placeholder="Select channels" style={{ width: '100%' }}>
+                      {discordChannelsList.map(ch => (
+                        <Option key={ch.id} value={ch.id}>#{ch.name}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name={['moderation', 'scanOnlyNewMembers']} valuePropName="checked" label="Scan Only New Members">
+                    <Switch />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name={['moderation', 'newMemberDays']} label="New Member Window (Days)">
+                    <InputNumber style={{ width: '100%' }} min={1} max={365} />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item name={['moderation', 'aiChecksPerMinute']} label="Max GPT Calls / Min">
+                    <InputNumber style={{ width: '100%' }} min={1} max={300} />
+                  </Form.Item>
                 </Col>
               </Row>
               
