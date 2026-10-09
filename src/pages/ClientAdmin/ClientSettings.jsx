@@ -47,6 +47,7 @@ const ClientSettings = ({ clientId }) => {
           welcomeButtons:        (c.welcomeButtons && c.welcomeButtons.length > 0) ? c.welcomeButtons : [{ id: 'btn_1', title: '' }, { id: 'btn_2', title: '' }, { id: 'btn_3', title: '' }],
           externalApiUrl:        c.externalApiUrl || '',
           externalApiKey:        c.externalApiKey || '',
+          leadCaptureFields:     c.leadCaptureFields || [],
         });
       }
     } catch (error) {
@@ -290,13 +291,56 @@ You are highly intelligent, and your only focus is ${businessName}'s success.`;
           </Form.Item>
 
           {hasWhatsapp && (
-            <Form.Item
-              name="leadNotificationEmail"
-              label={<Text strong>Lead Notification Email</Text>}
-              extra="Email address where new captured leads will be sent."
-            >
-              <Input type="email" placeholder="admin@business.com" size="large" />
-            </Form.Item>
+            <>
+              <Form.Item
+                name="leadNotificationEmail"
+                label={<Text strong>Lead Notification Email</Text>}
+                extra="Email address where new captured leads will be sent."
+              >
+                <Input type="email" placeholder="admin@business.com" size="large" />
+              </Form.Item>
+
+              <div style={{ marginBottom: 24, padding: 16, background: '#f8f9fa', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <Title level={5} style={{ marginTop: 0, color: '#0f172a' }}>Dynamic Lead Capture Fields (SaaS)</Title>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                  Define custom fields you want the AI to capture from the user before closing a lead (e.g. Budget, City). 
+                  The AI will automatically ask for these, and they will be included in the email notification.
+                </Text>
+                
+                <Form.List name="leadCaptureFields">
+                  {(fields, { add, remove }) => (
+                    <>
+                      {fields.map(({ key, name, ...restField }) => (
+                        <div key={key} style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'center' }}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'label']}
+                            style={{ margin: 0, flex: 1 }}
+                            rules={[{ required: true, message: 'Missing label' }]}
+                          >
+                            <Input placeholder="Label (e.g. Project Budget)" />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'key']}
+                            style={{ margin: 0, flex: 1 }}
+                            rules={[{ required: true, message: 'Missing key' }]}
+                          >
+                            <Input placeholder="Key (e.g. project_budget)" />
+                          </Form.Item>
+                          <MinusCircleOutlined onClick={() => remove(name)} style={{ color: '#ef4444', fontSize: 18 }} />
+                        </div>
+                      ))}
+                      <Form.Item style={{ margin: 0, marginTop: 12 }}>
+                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                          Add Custom Lead Field
+                        </Button>
+                      </Form.Item>
+                    </>
+                  )}
+                </Form.List>
+              </div>
+            </>
           )}
 
           {hasWhatsapp && (

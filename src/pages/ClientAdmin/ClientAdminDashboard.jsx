@@ -996,6 +996,7 @@ const ClientAdminDashboard = () => {
     { title: 'Phone', dataIndex: 'phone', key: 'phone', render: (text) => <Text copyable>{text}</Text> },
     { title: 'Email', dataIndex: 'email', key: 'email', render: (text) => text || <Text type="secondary">—</Text> },
     { title: 'Company', dataIndex: 'companyName', key: 'companyName', render: (text) => text ? <Tag>{text}</Tag> : <Text type="secondary">—</Text> },
+    { title: 'Requirements', dataIndex: 'customData', key: 'customData', render: (text) => text ? <Text style={{ fontSize: 12, color: '#d97706', backgroundColor: '#fef3c7', padding: '2px 6px', borderRadius: 4 }}>{text}</Text> : <Text type="secondary">—</Text> },
     { title: 'Source', dataIndex: 'source', key: 'source', render: (text) => <Tag color="blue">{text}</Tag> },
     {
       title: 'Status', dataIndex: 'status', key: 'status',
@@ -1013,13 +1014,14 @@ const ClientAdminDashboard = () => {
       return;
     }
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Name,Phone,Email,Company,Source,Status,Date\n";
+    csvContent += "Name,Phone,Email,Company,Requirements,Source,Status,Date\n";
     leads.forEach(lead => {
       const row = [
         `"${lead.name || ''}"`,
         `"${lead.phone || ''}"`,
         `"${lead.email || ''}"`,
         `"${lead.companyName || ''}"`,
+        `"${lead.customData || ''}"`,
         `"${lead.source || ''}"`,
         `"${lead.status || 'New'}"`,
         `"${new Date(lead.createdAt || lead.created).toLocaleDateString()}"`
